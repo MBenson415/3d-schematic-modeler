@@ -1,0 +1,201 @@
+{
+  "": {
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/master.swiftdeps"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/App.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/App.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/App.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/App~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/App.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/App.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Models/Circuit.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/Circuit.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/Circuit.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/Circuit~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/Circuit.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/Circuit.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Models/DemoCircuits.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DemoCircuits.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DemoCircuits.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DemoCircuits~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DemoCircuits.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DemoCircuits.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Models/ServiceManual.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ServiceManual.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ServiceManual.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ServiceManual~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ServiceManual.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ServiceManual.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Rendering/ComponentGeometry.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentGeometry.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentGeometry.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentGeometry~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentGeometry.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentGeometry.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Rendering/SceneBuilder.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneBuilder.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneBuilder.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneBuilder.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneBuilder.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Rendering/WireRenderer.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/WireRenderer.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/WireRenderer.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/WireRenderer~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/WireRenderer.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/WireRenderer.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Services/APIUsageTracker.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/APIUsageTracker.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/APIUsageTracker.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/APIUsageTracker~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/APIUsageTracker.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/APIUsageTracker.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Services/CircuitCacheService.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitCacheService.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitCacheService.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitCacheService~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitCacheService.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitCacheService.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Services/ClaudeAPIService.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ClaudeAPIService.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ClaudeAPIService.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ClaudeAPIService~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ClaudeAPIService.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ClaudeAPIService.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Services/ManualLibraryService.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualLibraryService.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualLibraryService.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualLibraryService~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualLibraryService.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualLibraryService.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Services/ManualSearchService.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualSearchService.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualSearchService.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualSearchService~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualSearchService.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualSearchService.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/ViewModels/CircuitViewModel.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitViewModel.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitViewModel.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitViewModel.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitViewModel.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/ViewModels/ManualBrowserViewModel.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserViewModel.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserViewModel.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserViewModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserViewModel.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserViewModel.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/AssemblyBrowserView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyBrowserView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyBrowserView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyBrowserView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyBrowserView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyBrowserView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/AssemblyListSidebar.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyListSidebar.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyListSidebar.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyListSidebar~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyListSidebar.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/AssemblyListSidebar.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/CircuitExplanationView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitExplanationView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitExplanationView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitExplanationView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitExplanationView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/CircuitExplanationView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/ComponentDetailView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentDetailView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentDetailView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentDetailView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentDetailView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentDetailView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/ComponentListView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentListView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentListView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentListView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentListView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ComponentListView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/ContentView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ContentView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ContentView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ContentView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ContentView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ContentView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/GuidedTroubleshootView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/GuidedTroubleshootView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/GuidedTroubleshootView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/GuidedTroubleshootView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/GuidedTroubleshootView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/GuidedTroubleshootView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/ManualBrowserView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualBrowserView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/ManualListSidebar.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualListSidebar.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualListSidebar.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualListSidebar~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualListSidebar.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/ManualListSidebar.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/SceneKitView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneKitView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneKitView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneKitView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneKitView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SceneKitView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/SchematicImageViewer.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImageViewer.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImageViewer.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImageViewer~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImageViewer.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImageViewer.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/SchematicImportView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImportView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImportView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImportView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImportView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicImportView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/Sources/SchematicModeler/Views/SchematicPreviewView.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicPreviewView.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicPreviewView.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicPreviewView~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicPreviewView.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/SchematicPreviewView.dia"
+  },
+  "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/DerivedSources/resource_bundle_accessor.swift": {
+    "dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/resource_bundle_accessor.d",
+    "object": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/resource_bundle_accessor.swift.o",
+    "swiftmodule": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/resource_bundle_accessor~partial.swiftmodule",
+    "swift-dependencies": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/resource_bundle_accessor.swiftdeps",
+    "diagnostics": "/Users/marshallbenson/Desktop/Code/3d-schematic-modeler/.build/index-build/arm64-apple-macosx/debug/SchematicModeler.build/resource_bundle_accessor.dia"
+  }
+}

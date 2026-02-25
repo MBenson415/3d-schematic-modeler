@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:3d-schematic-modeler}",
+            "name": "Debug SchematicModeler",
+            "target": "SchematicModeler",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug SchematicModeler"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:3d-schematic-modeler}",
+            "name": "Release SchematicModeler",
+            "target": "SchematicModeler",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release SchematicModeler"
+        }
+    ]
+}

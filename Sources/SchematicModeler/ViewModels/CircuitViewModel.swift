@@ -34,6 +34,7 @@ final class CircuitViewModel {
         self.pendingAssemblyName = nil
         self.selectedComponentID = nil
         self.connectedNets = []
+        self.circuitExplanation = Self.buildExplanation(from: circuit)
         sceneBuilder.buildCircuit(circuit)
     }
 
@@ -50,22 +51,44 @@ final class CircuitViewModel {
     func loadDemoCircuit() {
         let demo = DemoCircuits.pioneerSX750PowerAmp()
         loadCircuit(demo)
-        circuitExplanation = """
-        Pioneer SX-750 Power Amplifier Assembly (AWH-046)
+    }
 
-        This is a complementary-symmetry push-pull power amplifier capable of \
-        delivering 50W per channel. The circuit uses a differential pair input \
-        stage (Q101/Q102) for low noise and high common-mode rejection, followed \
-        by a voltage amplifier stage (Q103) and complementary output transistors \
-        (Q105/Q106) in a quasi-complementary configuration.
+    // MARK: - Explanation Builder
 
-        Key functional blocks:
-        • Input Stage — Differential pair with constant current source
-        • Voltage Amplifier — Class A driver with bootstrap capacitor
-        • Output Stage — Complementary push-pull with bias network
-        • Feedback Network — Sets closed-loop gain via R107/R108
-        • Protection — Output coupling capacitor and DC offset detection
-        """
+    private static func buildExplanation(from circuit: Circuit) -> String {
+        var lines: [String] = []
+
+        lines.append(circuit.name)
+
+        if let description = circuit.description, !description.isEmpty {
+            lines.append("")
+            lines.append(description)
+        }
+
+        // Component summary
+        let counts = Dictionary(grouping: circuit.components, by: \.type)
+            .mapValues(\.count)
+            .sorted { $0.value > $1.value }
+        if !counts.isEmpty {
+            let summary = counts.prefix(5).map { "\($0.value) \($0.key.displayName)\($0.value == 1 ? "" : "s")" }
+            lines.append("")
+            lines.append("\(circuit.components.count) components: \(summary.joined(separator: ", "))")
+        }
+
+        // Functional blocks
+        if !circuit.functionalBlocks.isEmpty {
+            lines.append("")
+            lines.append("Functional blocks:")
+            for block in circuit.functionalBlocks {
+                var entry = "• \(block.name)"
+                if let desc = block.description, !desc.isEmpty {
+                    entry += " — \(desc)"
+                }
+                lines.append(entry)
+            }
+        }
+
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - Selection

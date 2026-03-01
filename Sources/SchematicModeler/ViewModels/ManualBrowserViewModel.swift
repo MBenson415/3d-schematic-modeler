@@ -42,7 +42,8 @@ final class ManualBrowserViewModel {
             manuals = try await libraryService.listManuals()
             refreshCacheIndex()
         } catch {
-            manuals = []
+            // Don't wipe existing manuals on reload failure
+            print("[ManualBrowser] Failed to load manuals: \(error)")
         }
     }
 
@@ -134,14 +135,52 @@ final class ManualBrowserViewModel {
         }
     }
 
+    func downloadAndExtract(url: String, title: String) async {
+        guard let remoteURL = URL(string: url) else { return }
+
+        isExtracting = true
+        extractionStatus = "Downloading PDF..."
+
+        do {
+            let localFile = try await searchService.downloadPDF(from: remoteURL, title: title)
+            extractionStatus = "Extracting \(localFile.lastPathComponent)..."
+            let result = try await searchService.extractPDF(at: localFile)
+
+            extractionStatus = "Reloading manuals..."
+            let previousIDs = Set(manuals.map(\.id))
+            await loadManuals()
+
+            if let newManual = manuals.first(where: { !previousIDs.contains($0.id) }) {
+                selectManual(newManual)
+                extractionStatus = "Loaded: \(newManual.name) (\(newManual.boardAssemblies.count) assemblies)"
+            } else {
+                // No new manual directory found — show convert.py output for debugging
+                extractionStatus = "Extraction finished but no new manual found. Output: \(result.prefix(300))"
+            }
+        } catch {
+            extractionStatus = "Error: \(error.localizedDescription)"
+        }
+
+        isExtracting = false
+    }
+
     func extractPDF(at url: URL) async {
         isExtracting = true
         extractionStatus = "Extracting \(url.lastPathComponent)..."
 
         do {
             let result = try await searchService.extractPDF(at: url)
-            extractionStatus = "Done: \(result.prefix(200))"
+
+            extractionStatus = "Reloading manuals..."
+            let previousIDs = Set(manuals.map(\.id))
             await loadManuals()
+
+            if let newManual = manuals.first(where: { !previousIDs.contains($0.id) }) {
+                selectManual(newManual)
+                extractionStatus = "Loaded: \(newManual.name) (\(newManual.boardAssemblies.count) assemblies)"
+            } else {
+                extractionStatus = "Extraction finished but no new manual found. Output: \(result.prefix(300))"
+            }
         } catch {
             extractionStatus = "Error: \(error.localizedDescription)"
         }
@@ -256,6 +295,21 @@ final class ManualBrowserViewModel {
     func deleteCachedCircuit(manual: ServiceManual, assembly: BoardAssemblyRef) {
         try? CircuitCacheService.deleteCircuit(manualDirectory: manual.directoryURL, assemblyID: assembly.id)
         cachedAssemblies.remove("\(manual.id)/\(assembly.id)")
+    }
+
+    /// Delete an entire manual directory from disk and refresh the list
+    func deleteManual(_ manual: ServiceManual) {
+        if selectedManual == manual {
+            selectManual(nil)
+        }
+
+        let fm = FileManager.default
+        if fm.fileExists(atPath: manual.directoryURL.path) {
+            try? fm.removeItem(at: manual.directoryURL)
+        }
+
+        manuals.removeAll { $0.id == manual.id }
+        cachedAssemblies = cachedAssemblies.filter { !$0.hasPrefix("\(manual.id)/") }
     }
 
     // MARK: - Finder

@@ -1,11 +1,16 @@
 import Foundation
 
-/// Shells out to the service-manual-reader Python tools for search and extraction
+/// Communicates with the service-manual-reader MCP server for search and extraction
 actor ManualSearchService {
 
-    private let uvPath = "/Users/marshallbenson/.local/bin/uv"
     private let mcpServerDir = "/Users/marshallbenson/Desktop/Code/service-manual-reader/mcp-server"
-    private let convertScript = "/Users/marshallbenson/Desktop/Code/service-manual-reader/convert.py"
+    private let mcpClient: MCPClient
+
+    init() {
+        mcpClient = MCPClient(
+            serverDirectory: "/Users/marshallbenson/Desktop/Code/service-manual-reader/mcp-server"
+        )
+    }
 
     struct SearchResult: Identifiable, Sendable {
         let id = UUID()
@@ -16,83 +21,59 @@ actor ManualSearchService {
     // MARK: - Search
 
     func searchManual(brand: String, model: String) async throws -> [SearchResult] {
-        let escapedBrand = brand.replacingOccurrences(of: "'", with: "\\'")
-        let escapedModel = model.replacingOccurrences(of: "'", with: "\\'")
-
-        let script = """
-        import asyncio, sys
-        sys.path.insert(0, '.')
-        from main import search_service_manual
-        result = asyncio.run(search_service_manual('\(escapedBrand)', '\(escapedModel)'))
-        print(result)
-        """
-
-        let output = try await runProcess(
-            executable: uvPath,
-            arguments: ["--directory", mcpServerDir, "run", "python", "-c", script],
-            timeout: 20
+        let output = try await mcpClient.callTool(
+            name: "search_service_manual",
+            arguments: ["brand": brand, "model": model]
         )
-
         return parseSearchResults(output)
+    }
+
+    // MARK: - Download PDF
+
+    func downloadPDF(from url: URL, title: String) async throws -> URL {
+        let (tempURL, response) = try await URLSession.shared.download(from: url)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200 ..< 300).contains(httpResponse.statusCode)
+        else {
+            throw ManualSearchError.downloadFailed
+        }
+
+        let safeName = title
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+            .prefix(80)
+        let filename = safeName.isEmpty ? UUID().uuidString : String(safeName)
+
+        let manualsDir = ManualLibraryService.manualsDirectory
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: manualsDir.path) {
+            try fm.createDirectory(at: manualsDir, withIntermediateDirectories: true)
+        }
+
+        let dest = manualsDir
+            .appendingPathComponent(filename)
+            .appendingPathExtension("pdf")
+        if fm.fileExists(atPath: dest.path) {
+            try fm.removeItem(at: dest)
+        }
+        try fm.moveItem(at: tempURL, to: dest)
+        return dest
     }
 
     // MARK: - Extract PDF
 
     func extractPDF(at path: URL) async throws -> String {
-        let output = try await runProcess(
-            executable: uvPath,
-            arguments: [
-                "--directory", mcpServerDir,
-                "run", "python", convertScript, path.path,
-            ],
-            timeout: 300
+        try await mcpClient.callTool(
+            name: "extract_manual",
+            arguments: ["pdf_path": path.path]
         )
-
-        return output
     }
 
-    // MARK: - Process Execution
+    // MARK: - Shutdown
 
-    private func runProcess(executable: String, arguments: [String], timeout: TimeInterval) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: executable)
-            process.arguments = arguments
-
-            let stdout = Pipe()
-            let stderr = Pipe()
-            process.standardOutput = stdout
-            process.standardError = stderr
-
-            process.terminationHandler = { _ in
-                let outData = stdout.fileHandleForReading.readDataToEndOfFile()
-                let errData = stderr.fileHandleForReading.readDataToEndOfFile()
-                let outString = String(data: outData, encoding: .utf8) ?? ""
-                let errString = String(data: errData, encoding: .utf8) ?? ""
-
-                if process.terminationStatus == 0 {
-                    continuation.resume(returning: outString)
-                } else {
-                    continuation.resume(throwing: ManualSearchError.processError(
-                        exitCode: process.terminationStatus,
-                        stderr: errString.isEmpty ? outString : errString
-                    ))
-                }
-            }
-
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
-
-            // Timeout
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
-                if process.isRunning {
-                    process.terminate()
-                }
-            }
-        }
+    func shutdown() async {
+        await mcpClient.stop()
     }
 
     // MARK: - Parse Search Results
@@ -126,6 +107,7 @@ actor ManualSearchService {
 enum ManualSearchError: LocalizedError {
     case processError(exitCode: Int32, stderr: String)
     case timeout
+    case downloadFailed
 
     var errorDescription: String? {
         switch self {
@@ -133,6 +115,8 @@ enum ManualSearchError: LocalizedError {
             "Process exited with code \(code): \(stderr.prefix(500))"
         case .timeout:
             "Process timed out"
+        case .downloadFailed:
+            "Failed to download PDF"
         }
     }
 }

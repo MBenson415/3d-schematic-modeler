@@ -146,7 +146,7 @@ actor ManualLibraryService {
         }
 
         // Build final assembly refs
-        let assemblyRefs = assemblies.values
+        var assemblyRefs = assemblies.values
             .sorted { $0.id < $1.id }
             .map { builder in
                 BoardAssemblyRef(
@@ -156,6 +156,38 @@ actor ManualLibraryService {
                     partsListImages: builder.partsListImages
                 )
             }
+
+        // Fallback: if no assemblies were defined, create one from all PNGs in the directory
+        if assemblyRefs.isEmpty {
+            let fm = FileManager.default
+            let allFiles = (try? fm.contentsOfDirectory(
+                at: directoryURL,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )) ?? []
+
+            let pngImages = allFiles
+                .filter { $0.pathExtension.lowercased() == "png" }
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+                .map { fileURL in
+                    SchematicImage(
+                        id: fileURL.lastPathComponent,
+                        filename: fileURL.lastPathComponent,
+                        fileURL: fileURL,
+                        category: .schematic,
+                        boardID: "ALL"
+                    )
+                }
+
+            if !pngImages.isEmpty {
+                assemblyRefs = [BoardAssemblyRef(
+                    id: "ALL",
+                    name: name,
+                    schematicImages: pngImages,
+                    partsListImages: []
+                )]
+            }
+        }
 
         return ServiceManual(
             id: dirName,

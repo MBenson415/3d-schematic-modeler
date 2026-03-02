@@ -100,6 +100,127 @@ enum WireRenderer {
         return wiresRoot
     }
 
+    // MARK: - Schematic Wires
+
+    private static let schematicTraceRadius: CGFloat = 0.002
+
+    /// Creates schematic-style wire connections — clean orthogonal lines, no PCB features
+    static func createSchematicWires(for circuit: Circuit, in scene: SCNScene) -> SCNNode {
+        let wiresRoot = SCNNode()
+        wiresRoot.name = "wires"
+
+        for (index, net) in circuit.nets.enumerated() {
+            let defaultColor = colorForNet(index: index)
+            let color = colorForNetID(net.id, fallback: defaultColor)
+            let netNode = SCNNode()
+            netNode.name = "net_\(net.id)"
+
+            let pinData = resolvePinPositions(for: net, in: scene)
+            guard pinData.count >= 2 else { continue }
+
+            let chain = buildChain(from: pinData.map(\.position))
+
+            for (i, j) in chain {
+                let from = pinData[i].position
+                let to = pinData[j].position
+                let traceNode = createSchematicTrace(from: from, to: to, color: color, netID: net.id)
+                netNode.addChildNode(traceNode)
+            }
+
+            // Junction dots where 3+ pins meet on same net
+            if pinData.count >= 3 {
+                for pin in pinData {
+                    let dot = makeJointSphere(at: pin.position, color: color)
+                    netNode.addChildNode(dot)
+                }
+            }
+
+            wiresRoot.addChildNode(netNode)
+        }
+
+        return wiresRoot
+    }
+
+    /// Creates a schematic-style trace: orthogonal L-route at pin elevation, thin and matte
+    private static func createSchematicTrace(
+        from start: SCNVector3, to end: SCNVector3,
+        color: NSColor, netID: String
+    ) -> SCNNode {
+        let node = SCNNode()
+        node.name = "wire_\(netID)"
+
+        let dx = abs(CGFloat(end.x) - CGFloat(start.x))
+        let dz = abs(CGFloat(end.z) - CGFloat(start.z))
+        let routeY = (CGFloat(start.y) + CGFloat(end.y)) / 2
+
+        let p1 = SCNVector3(CGFloat(start.x), routeY, CGFloat(start.z))
+        let p2 = SCNVector3(CGFloat(end.x), routeY, CGFloat(end.z))
+
+        // Vertical stubs if pins are at different heights
+        if abs(CGFloat(start.y) - routeY) > 0.001 {
+            node.addChildNode(makeSchematicSegment(from: start, to: p1, color: color))
+        }
+
+        if dx > 0.01 && dz > 0.01 {
+            let corner = SCNVector3(CGFloat(end.x), routeY, CGFloat(start.z))
+            node.addChildNode(makeSchematicSegment(from: p1, to: corner, color: color))
+            node.addChildNode(makeSchematicSegment(from: corner, to: p2, color: color))
+            node.addChildNode(makeJointSphere(at: corner, color: color))
+        } else {
+            node.addChildNode(makeSchematicSegment(from: p1, to: p2, color: color))
+        }
+
+        if abs(CGFloat(end.y) - routeY) > 0.001 {
+            node.addChildNode(makeSchematicSegment(from: p2, to: end, color: color))
+        }
+
+        return node
+    }
+
+    private static func makeSchematicSegment(from start: SCNVector3, to end: SCNVector3, color: NSColor) -> SCNNode {
+        let dx = CGFloat(end.x) - CGFloat(start.x)
+        let dy = CGFloat(end.y) - CGFloat(start.y)
+        let dz = CGFloat(end.z) - CGFloat(start.z)
+        let dist = sqrt(dx * dx + dy * dy + dz * dz)
+
+        guard dist > 0.0005 else { return SCNNode() }
+
+        let tube = SCNCylinder(radius: schematicTraceRadius, height: dist)
+        tube.radialSegmentCount = 8
+        tube.firstMaterial = makeSchematicMaterial(color: color)
+
+        let node = SCNNode(geometry: tube)
+        node.position = SCNVector3(
+            (CGFloat(start.x) + CGFloat(end.x)) / 2,
+            (CGFloat(start.y) + CGFloat(end.y)) / 2,
+            (CGFloat(start.z) + CGFloat(end.z)) / 2
+        )
+
+        let up = SIMD3<Double>(0, 1, 0)
+        let dir = SIMD3<Double>(Double(dx), Double(dy), Double(dz))
+        let dirNorm = simd_normalize(dir)
+        let dot = simd_dot(up, dirNorm)
+        let cross = simd_cross(up, dirNorm)
+        let crossLen = simd_length(cross)
+
+        if crossLen > 0.0001 {
+            let angle = acos(min(max(dot, -1), 1))
+            let axis = cross / crossLen
+            node.rotation = SCNVector4(axis.x, axis.y, axis.z, angle)
+        } else if dot < 0 {
+            node.rotation = SCNVector4(1, 0, 0, Double.pi)
+        }
+
+        return node
+    }
+
+    private static func makeSchematicMaterial(color: NSColor) -> SCNMaterial {
+        let mat = SCNMaterial()
+        mat.diffuse.contents = color
+        mat.lightingModel = .constant  // flat/unlit for clean schematic look
+        return mat
+    }
+
     // MARK: - Routed Trace (L-route on PCB top surface)
 
     /// Creates a routed trace on the top surface: pin stub down to trace layer → L-route → stub up to pin
@@ -333,6 +454,38 @@ enum WireRenderer {
         }
 
         return results
+    }
+
+    // MARK: - Net Labels
+
+    /// Adds floating text labels at wire midpoints showing net names
+    static func addNetLabels(for circuit: Circuit, in scene: SCNScene) {
+        guard let wiresRoot = scene.rootNode.childNode(withName: "wires", recursively: false) else { return }
+
+        let labelsNode = SCNNode()
+        labelsNode.name = "netLabels"
+
+        for (index, net) in circuit.nets.enumerated() {
+            let displayName = net.label ?? net.id
+            // Skip generic internal nets (n1, n2, ...) — only label named nets
+            if net.label == nil && displayName.count <= 3 { continue }
+
+            let pinData = resolvePinPositions(for: net, in: scene)
+            guard pinData.count >= 2 else { continue }
+
+            // Place label at the centroid of all pin positions for this net
+            let avgX = pinData.map { CGFloat($0.position.x) }.reduce(0, +) / CGFloat(pinData.count)
+            let avgY = pinData.map { CGFloat($0.position.y) }.reduce(0, +) / CGFloat(pinData.count)
+            let avgZ = pinData.map { CGFloat($0.position.z) }.reduce(0, +) / CGFloat(pinData.count)
+
+            let color = colorForNetID(net.id, fallback: colorForNet(index: index))
+            let label = ComponentGeometry.makeLabel(text: displayName, size: 0.025, color: color)
+            label.position = SCNVector3(avgX, avgY + 0.04, avgZ)
+            label.name = "netLabel_\(net.id)"
+            labelsNode.addChildNode(label)
+        }
+
+        wiresRoot.addChildNode(labelsNode)
     }
 
     // MARK: - Highlighting

@@ -6,11 +6,27 @@ enum CircuitCacheService {
 
     private static let circuitsDirName = "_circuits"
 
+    /// Converts an assembly ID to a filesystem-safe filename.
+    /// IDs like "HT3035:B / 25C335B" contain `:` and `/` which break file paths.
+    static func safeFilename(for assemblyID: String) -> String {
+        var safe = assemblyID
+        for ch: Character in ["/", ":", "\\", " "] {
+            safe = safe.split(separator: ch, omittingEmptySubsequences: false).joined(separator: "-")
+        }
+        // Collapse multiple dashes and trim
+        while safe.contains("--") {
+            safe = safe.replacingOccurrences(of: "--", with: "-")
+        }
+        safe = safe.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        return safe.isEmpty ? "unknown" : safe
+    }
+
     /// Returns the cache file URL for a given assembly within a manual directory
     static func cacheURL(manualDirectory: URL, assemblyID: String) -> URL {
-        manualDirectory
+        let filename = safeFilename(for: assemblyID)
+        return manualDirectory
             .appendingPathComponent(circuitsDirName)
-            .appendingPathComponent("\(assemblyID).json")
+            .appendingPathComponent("\(filename).json")
     }
 
     /// Check if a cached circuit exists

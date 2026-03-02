@@ -1,5 +1,8 @@
 import SwiftUI
 import AppKit
+import os.log
+
+private let browserLog = Logger(subsystem: "SchematicModeler", category: "ManualBrowser")
 
 @MainActor
 @Observable
@@ -55,9 +58,10 @@ final class ManualBrowserViewModel {
     func refreshCacheIndex() {
         var cached: Set<String> = []
         for manual in manuals {
-            let ids = CircuitCacheService.cachedAssemblyIDs(manualDirectory: manual.directoryURL)
-            for id in ids {
-                cached.insert("\(manual.id)/\(id)")
+            for assembly in manual.boardAssemblies {
+                if CircuitCacheService.hasCachedCircuit(manualDirectory: manual.directoryURL, assemblyID: assembly.id) {
+                    cached.insert("\(manual.id)/\(assembly.id)")
+                }
             }
         }
         cachedAssemblies = cached
@@ -210,67 +214,57 @@ final class ManualBrowserViewModel {
         isExtracting = false
     }
 
-    // MARK: - Analyze Assembly (all images)
+    // MARK: - Analyze Assembly (via MCP server)
 
-    /// Loads all schematic + parts list images for the selected assembly and sends them to Claude
+    /// Generates a circuit netlist for the selected assembly.
+    /// Tries the MCP server first; falls back to direct Claude API if MCP doesn't produce a file.
     func analyzeSelectedAssembly() async throws -> Circuit {
-        guard let assembly = selectedAssembly else {
+        guard let manual = selectedManual,
+              let assembly = selectedAssembly else {
             throw ClaudeAPIError.invalidResponse
-        }
-
-        let apiKey = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
-        guard !apiKey.isEmpty else {
-            throw ClaudeAPIError.noAPIKey
         }
 
         isAnalyzing = true
         analysisError = nil
-        analysisProgress = "Loading images for \(assembly.id)..."
+        analysisProgress = "Generating netlist for \(assembly.id)..."
+        browserLog.info("Starting netlist generation: manual='\(manual.name)' board='\(assembly.id)'")
+        let startTime = CFAbsoluteTimeGetCurrent()
 
         do {
-            // Load all images for this assembly
-            var images: [(data: Data, mimeType: String, label: String)] = []
-
-            for (i, schematic) in assembly.schematicImages.enumerated() {
-                analysisProgress = "Loading schematic \(i + 1)/\(assembly.schematicImages.count)..."
-                let data = try await libraryService.loadImage(at: schematic.fileURL)
-                images.append((data: data, mimeType: "image/png", label: "Schematic page \(i + 1): \(schematic.filename)"))
-            }
-
-            for (i, partsList) in assembly.partsListImages.enumerated() {
-                analysisProgress = "Loading parts list \(i + 1)/\(assembly.partsListImages.count)..."
-                let data = try await libraryService.loadImage(at: partsList.fileURL)
-                images.append((data: data, mimeType: "image/png", label: "Parts list page \(i + 1): \(partsList.filename)"))
-            }
-
-            guard !images.isEmpty else {
-                throw ClaudeAPIError.invalidResponse
-            }
-
-            analysisProgress = "Analyzing \(images.count) images with Claude..."
-
-            let service = ClaudeAPIService(apiKey: apiKey)
-            let circuit = try await service.analyzeAssembly(
-                images: images,
-                assemblyName: "\(assembly.id) — \(assembly.name)",
-                manualName: selectedManual?.name ?? "service manual",
-                progressHandler: { [weak self] status in
+            // --- Attempt 1: MCP server ---
+            let mcpResult = try? await searchService.generateNetlist(
+                manualName: manual.name,
+                boardID: assembly.id,
+                onProgress: { @Sendable [weak self] line in
                     Task { @MainActor in
-                        self?.analysisProgress = status
+                        self?.analysisProgress = line
                     }
                 }
             )
 
-            // Cache the result
-            if let manual = selectedManual {
-                try? CircuitCacheService.saveCircuit(circuit, manualDirectory: manual.directoryURL, assemblyID: assembly.id)
-                cachedAssemblies.insert("\(manual.id)/\(assembly.id)")
+            if CircuitCacheService.hasCachedCircuit(manualDirectory: manual.directoryURL, assemblyID: assembly.id) {
+                let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                browserLog.info("MCP netlist complete in \(String(format: "%.1f", elapsed))s")
+                return try loadAndFinish(manual: manual, assembly: assembly)
             }
 
+            browserLog.info("MCP did not produce file — falling back to direct Claude API. MCP output: \(mcpResult?.prefix(200) ?? "nil")")
+
+            // --- Attempt 2: Direct Claude API ---
+            let circuit = try await analyzeWithClaudeAPI(manual: manual, assembly: assembly)
+
+            let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+            browserLog.info("Claude API analysis complete in \(String(format: "%.1f", elapsed))s — \(circuit.components.count) components")
+
+            // Cache the result
+            try? CircuitCacheService.saveCircuit(circuit, manualDirectory: manual.directoryURL, assemblyID: assembly.id)
+            cachedAssemblies.insert("\(manual.id)/\(assembly.id)")
             isAnalyzing = false
             analysisProgress = ""
             return circuit
         } catch {
+            let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+            browserLog.error("Analysis failed after \(String(format: "%.1f", elapsed))s: \(error.localizedDescription)")
             isAnalyzing = false
             analysisProgress = ""
             analysisError = error.localizedDescription
@@ -278,29 +272,88 @@ final class ManualBrowserViewModel {
         }
     }
 
-    /// Single-image analysis (for previewing individual schematics)
-    func analyzeSelectedImage() async throws -> Circuit {
-        guard let imageData = loadedImageData, let image = selectedImage else {
-            throw ClaudeAPIError.invalidResponse
-        }
+    /// Loads a cached circuit and marks it in the index
+    private func loadAndFinish(manual: ServiceManual, assembly: BoardAssemblyRef) throws -> Circuit {
+        analysisProgress = "Loading circuit..."
+        let circuit = try CircuitCacheService.loadCircuit(
+            manualDirectory: manual.directoryURL,
+            assemblyID: assembly.id
+        )
+        browserLog.info("Loaded circuit: \(circuit.name) — \(circuit.components.count) components, \(circuit.nets.count) nets")
+        cachedAssemblies.insert("\(manual.id)/\(assembly.id)")
+        isAnalyzing = false
+        analysisProgress = ""
+        return circuit
+    }
 
+    /// Fallback: analyze assembly images directly via Claude Vision API
+    private func analyzeWithClaudeAPI(manual: ServiceManual, assembly: BoardAssemblyRef) async throws -> Circuit {
         let apiKey = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
         guard !apiKey.isEmpty else {
-            throw ClaudeAPIError.noAPIKey
+            throw MCPAnalysisError.noAPIKeyForFallback(boardID: assembly.id)
+        }
+
+        let allImages = assembly.allImages
+        guard !allImages.isEmpty else {
+            throw MCPAnalysisError.noImagesAvailable(boardID: assembly.id)
+        }
+
+        analysisProgress = "Falling back to Claude Vision API (\(allImages.count) images)..."
+        browserLog.info("Claude API fallback: \(allImages.count) images for \(assembly.id)")
+
+        // Load image data from disk
+        var imageEntries: [(data: Data, mimeType: String, label: String)] = []
+        for image in allImages {
+            guard let data = try? Data(contentsOf: image.fileURL) else { continue }
+            let ext = image.fileURL.pathExtension.lowercased()
+            let mimeType = ext == "jpg" || ext == "jpeg" ? "image/jpeg" : "image/png"
+            imageEntries.append((data: data, mimeType: mimeType, label: "\(image.category.displayName) — \(image.filename)"))
+        }
+
+        guard !imageEntries.isEmpty else {
+            throw MCPAnalysisError.noImagesAvailable(boardID: assembly.id)
+        }
+
+        let service = ClaudeAPIService(apiKey: apiKey)
+        return try await service.analyzeAssembly(
+            images: imageEntries,
+            assemblyName: "\(assembly.id) — \(assembly.name)",
+            manualName: manual.name,
+            progressHandler: { @Sendable [weak self] line in
+                Task { @MainActor in
+                    self?.analysisProgress = line
+                }
+            }
+        )
+    }
+
+    /// Single-image analysis via MCP server — analyzes the schematic for a specific board assembly
+    func analyzeSelectedImage() async throws -> Circuit {
+        guard let image = selectedImage,
+              let manual = selectedManual else {
+            throw ClaudeAPIError.invalidResponse
         }
 
         isAnalyzing = true
         analysisError = nil
-        analysisProgress = "Analyzing single image..."
+        analysisProgress = "Analyzing schematic for \(image.boardID)..."
 
         do {
-            let service = ClaudeAPIService(apiKey: apiKey)
-            let context = "Board assembly \(image.boardID) from \(selectedManual?.name ?? "service manual"). This is a \(image.category.displayName.lowercased()) image."
-            let circuit = try await service.analyzeSchematic(
-                imageData: imageData,
-                mimeType: "image/png",
-                context: context
+            // Use MCP server to analyze this board's schematics
+            let _ = try await searchService.analyzeSchematic(
+                manualName: manual.name,
+                boardID: image.boardID
             )
+
+            analysisProgress = "Loading circuit..."
+
+            // Load the result from disk
+            let circuit = try CircuitCacheService.loadCircuit(
+                manualDirectory: manual.directoryURL,
+                assemblyID: image.boardID
+            )
+
+            cachedAssemblies.insert("\(manual.id)/\(image.boardID)")
             isAnalyzing = false
             analysisProgress = ""
             return circuit
@@ -380,5 +433,24 @@ final class ManualBrowserViewModel {
 
     func openInFinder(_ image: SchematicImage) {
         NSWorkspace.shared.activateFileViewerSelecting([image.fileURL])
+    }
+}
+
+// MARK: - MCP Analysis Errors
+
+enum MCPAnalysisError: LocalizedError {
+    case noCircuitGenerated(boardID: String, serverOutput: String)
+    case noAPIKeyForFallback(boardID: String)
+    case noImagesAvailable(boardID: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .noCircuitGenerated(let boardID, let serverOutput):
+            "No circuit generated for \(boardID). Server: \(serverOutput)"
+        case .noAPIKeyForFallback(let boardID):
+            "MCP failed for \(boardID) and no API key set for fallback. Add your Anthropic API key in settings."
+        case .noImagesAvailable(let boardID):
+            "No schematic images found for \(boardID)."
+        }
     }
 }

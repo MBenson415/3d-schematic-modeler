@@ -157,7 +157,7 @@ struct AssemblyListSidebar: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(viewModel.isAnalyzing)
-                .help("Analyze \(assembly.id) with Claude")
+                .help("Generate netlist for \(assembly.id)")
             }
         }
         .padding(.vertical, 2)
@@ -202,7 +202,7 @@ struct AssemblyListSidebar: View {
             Button {
                 analyzeAssembly(assembly, manual: manual)
             } label: {
-                Label("Analyze with Claude", systemImage: "sparkles")
+                Label("Generate Netlist", systemImage: "sparkles")
             }
             .disabled(viewModel.isAnalyzing)
 
@@ -237,7 +237,8 @@ struct AssemblyListSidebar: View {
            let circuit = viewModel.loadCachedCircuit(manual: manual, assembly: assembly) {
             onCircuitLoaded(circuit)
         } else {
-            onAssemblySelected?(manual, assembly)
+            // No cached JSON — automatically run MCP generate_netlist
+            analyzeAssembly(assembly, manual: manual)
         }
     }
 

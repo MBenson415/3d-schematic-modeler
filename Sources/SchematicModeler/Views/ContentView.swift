@@ -5,8 +5,8 @@ import SceneKit
 struct ContentView: View {
     @State private var viewModel = CircuitViewModel()
     @State private var manualBrowserVM = ManualBrowserViewModel()
-    @State private var showInspector = true
-    @State private var showAssemblyBrowser = true
+    @AppStorage("showInspector") private var showInspector = true
+    @AppStorage("showAssemblyBrowser") private var showAssemblyBrowser = true
     @State private var showImportSheet = false
     @State private var showExportSheet = false
     @State private var showTroubleshootSheet = false
@@ -42,15 +42,15 @@ struct ContentView: View {
 
             // Center — 3D scene + bottom explanation
             VStack(spacing: 0) {
-                // 3D View
-                SceneKitView(
-                    scene: viewModel.scene,
-                    onComponentSelected: { designator in
-                        viewModel.selectComponent(designator)
-                    }
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .overlay {
+                // 3D View — ZStack so overlays render above the Metal-backed SCNView
+                ZStack {
+                    SceneKitView(
+                        scene: viewModel.scene,
+                        onComponentSelected: { designator in
+                            viewModel.selectComponent(designator)
+                        }
+                    )
+
                     // Verbose analysis progress bar
                     if manualBrowserVM.isAnalyzing {
                         AnalysisProgressOverlay(progress: manualBrowserVM.analysisProgress)
@@ -64,6 +64,7 @@ struct ContentView: View {
                         )
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 Divider()
 
@@ -129,6 +130,20 @@ struct ContentView: View {
                     Label("Load Demo", systemImage: "cpu")
                 }
                 .help("Load Pioneer SX-750 Power Amp demo circuit")
+
+                Button {
+                    viewModel.toggleLayoutMode()
+                } label: {
+                    Label(
+                        viewModel.layoutMode == .schematic ? "Pictorial" : "Schematic",
+                        systemImage: viewModel.layoutMode == .schematic
+                            ? "rectangle.3.group.fill" : "rectangle.3.group"
+                    )
+                }
+                .help(viewModel.layoutMode == .schematic
+                    ? "Switch to PCB (pictorial) layout"
+                    : "Switch to schematic layout")
+                .disabled(viewModel.circuit == nil)
 
                 Button {
                     showTroubleshootSheet.toggle()
@@ -312,32 +327,64 @@ struct AnalysisProgressOverlay: View {
 
     @State private var elapsedSeconds = 0
     @State private var timer: Timer?
+    @State private var logLines: [String] = []
 
     var body: some View {
         VStack(spacing: 12) {
-            ProgressView()
-                .controlSize(.regular)
+            // Determinate progress bar if we can parse a fraction, else indeterminate
+            if let fraction = parsedFraction {
+                ProgressView(value: fraction)
+                    .progressViewStyle(.linear)
+                    .frame(width: 220)
+                Text("\(Int(fraction * 100))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+                    .controlSize(.regular)
+            }
 
-            Text(progress.isEmpty ? "Starting analysis..." : progress)
+            // Current step
+            Text(currentStep)
                 .font(.callout.bold())
                 .multilineTextAlignment(.center)
+                .lineLimit(3)
+
+            // Scrolling log of server output
+            if !logLines.isEmpty {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(Array(logLines.suffix(8).enumerated()), id: \.offset) { i, line in
+                                Text(line)
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .id(i)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 80)
+                    .onChange(of: logLines.count) {
+                        withAnimation {
+                            proxy.scrollTo(logLines.suffix(8).count - 1, anchor: .bottom)
+                        }
+                    }
+                }
+            }
 
             Text(timeString)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-
-            Text("Claude is analyzing schematic images.\nThis typically takes 30–90 seconds.")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
         }
         .padding(24)
-        .frame(minWidth: 280)
+        .frame(minWidth: 320)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .onAppear {
             elapsedSeconds = 0
+            logLines = []
             timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
                 Task { @MainActor in
                     self.elapsedSeconds += 1
@@ -348,6 +395,53 @@ struct AnalysisProgressOverlay: View {
             timer?.invalidate()
             timer = nil
         }
+        .onChange(of: progress) {
+            if !progress.isEmpty {
+                logLines.append(progress)
+            }
+        }
+    }
+
+    /// The latest meaningful progress line to show as the main status
+    private var currentStep: String {
+        if progress.isEmpty { return "Starting analysis..." }
+        return progress
+    }
+
+    /// Attempt to parse a progress fraction from the server output.
+    /// Recognizes patterns like "Step 2/5", "3 of 7", "50%", "[2/4]"
+    private var parsedFraction: Double? {
+        let text = progress
+
+        // Match "N%" pattern
+        if let range = text.range(of: #"(\d+)%"#, options: .regularExpression) {
+            let numStr = text[range].dropLast() // remove %
+            if let n = Double(numStr), n > 0, n <= 100 {
+                return n / 100.0
+            }
+        }
+
+        // Match "N/M" or "N of M" pattern (step-style)
+        let stepPatterns = [
+            #"(\d+)\s*/\s*(\d+)"#,
+            #"(\d+)\s+of\s+(\d+)"#,
+            #"\[(\d+)/(\d+)\]"#,
+        ]
+        for pattern in stepPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern),
+               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+               match.numberOfRanges >= 3,
+               let r1 = Range(match.range(at: 1), in: text),
+               let r2 = Range(match.range(at: 2), in: text),
+               let current = Double(text[r1]),
+               let total = Double(text[r2]),
+               total > 0
+            {
+                return min(current / total, 1.0)
+            }
+        }
+
+        return nil
     }
 
     private var timeString: String {

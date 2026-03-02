@@ -19,6 +19,7 @@ final class CircuitViewModel {
     }
     var connectedNets: [Net] = []
     var circuitExplanation: String = ""
+    var layoutMode: LayoutMode = .pictorial
     var isAnalyzing: Bool = false
     var errorMessage: String?
 
@@ -34,6 +35,7 @@ final class CircuitViewModel {
         self.pendingAssemblyName = nil
         self.selectedComponentID = nil
         self.connectedNets = []
+        self.layoutMode = .pictorial
         self.circuitExplanation = Self.buildExplanation(from: circuit)
         sceneBuilder.buildCircuit(circuit)
     }
@@ -51,6 +53,23 @@ final class CircuitViewModel {
     func loadDemoCircuit() {
         let demo = DemoCircuits.pioneerSX750PowerAmp()
         loadCircuit(demo)
+    }
+
+    // MARK: - Layout Mode
+
+    func toggleLayoutMode() {
+        let newMode: LayoutMode = (layoutMode == .pictorial) ? .schematic : .pictorial
+        layoutMode = newMode
+        guard let circuit else { return }
+        sceneBuilder.switchLayoutMode(to: newMode)
+
+        // Re-apply selection highlighting after wires rebuild (animation 0.6s + fade 0.3s)
+        if let selectedID = selectedComponentID {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self else { return }
+                self.sceneBuilder.highlightNets(for: selectedID, in: circuit)
+            }
+        }
     }
 
     // MARK: - Explanation Builder

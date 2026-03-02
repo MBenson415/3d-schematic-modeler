@@ -1,7 +1,10 @@
 import Foundation
+import os.log
+
+private let mcpLog = Logger(subsystem: "SchematicModeler", category: "MCP")
 
 /// A JSON-RPC 2.0 client that communicates with an MCP server over stdio
-/// using newline-delimited JSON (one JSON object per line).
+/// using newline-delimited JSON (NDJSON), per the MCP stdio transport spec.
 actor MCPClient {
 
     private let serverDirectory: String
@@ -16,6 +19,9 @@ actor MCPClient {
 
     /// Buffer for accumulating raw bytes from stdout
     private var readBuffer = Data()
+
+    /// Callback invoked with each stderr line from the MCP server (for progress reporting)
+    private var stderrLineHandler: (@Sendable (String) -> Void)?
 
     init(
         serverDirectory: String,
@@ -38,6 +44,9 @@ actor MCPClient {
     /// Spawns the MCP server process and performs the initialize handshake.
     func start() async throws {
         guard process == nil else { return }
+
+        mcpLog.info("Starting MCP server: \(self.command) \(self.arguments.joined(separator: " "))")
+        mcpLog.info("Working directory: \(self.serverDirectory)")
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: command)
@@ -63,6 +72,7 @@ actor MCPClient {
         proc.standardError = stderr
 
         try proc.run()
+        mcpLog.info("MCP server process launched (PID \(proc.processIdentifier))")
 
         self.process = proc
         self.stdinPipe = stdin
@@ -70,17 +80,22 @@ actor MCPClient {
         self.stderrPipe = stderr
         self.readBuffer = Data()
 
+        // Start streaming stderr so server logs appear in the console
+        startStderrStreaming(stderr)
+
         // If the process exits immediately, surface the stderr output.
         try await Task.sleep(nanoseconds: 100_000_000) // 100ms
         if !proc.isRunning {
             let errData = stderr.fileHandleForReading.availableData
             let errString = String(data: errData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            mcpLog.error("MCP server exited immediately: \(errString)")
             throw MCPError.initializationFailed(
                 errString.isEmpty ? "Process exited with code \(proc.terminationStatus)" : errString
             )
         }
 
         // Initialize handshake
+        mcpLog.info("Sending initialize handshake...")
         let initResult: JSONRPCResponse = try await sendRequest(
             method: "initialize",
             params: [
@@ -94,17 +109,45 @@ actor MCPClient {
         )
 
         guard initResult.error == nil else {
+            mcpLog.error("Initialize handshake failed: \(initResult.error?.message ?? "unknown")")
             throw MCPError.initializationFailed(initResult.error?.message ?? "Unknown error")
         }
 
         // Send initialized notification (no response expected)
         try sendNotification(method: "notifications/initialized")
 
+        mcpLog.info("MCP server initialized successfully")
         isInitialized = true
+    }
+
+    /// Continuously reads stderr from the server process, logs each line, and forwards to progress handler
+    private func startStderrStreaming(_ pipe: Pipe) {
+        let handle = pipe.fileHandleForReading
+        handle.readabilityHandler = { [weak self] fileHandle in
+            let data = fileHandle.availableData
+            guard !data.isEmpty,
+                  let text = String(data: data, encoding: .utf8)
+            else { return }
+            for line in text.components(separatedBy: "\n") {
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    mcpLog.info("[MCP Server] \(trimmed)")
+                    // Forward to progress handler on main actor
+                    if let self {
+                        Task {
+                            let handler = await self.stderrLineHandler
+                            handler?(trimmed)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Terminates the MCP server process.
     func stop() {
+        mcpLog.info("Stopping MCP server")
+        stderrPipe?.fileHandleForReading.readabilityHandler = nil
         process?.terminate()
         process = nil
         stdinPipe = nil
@@ -117,26 +160,49 @@ actor MCPClient {
     // MARK: - Tool Calls
 
     /// Calls an MCP tool by name with the given arguments and returns text content.
-    func callTool(name: String, arguments: [String: Any] = [:]) async throws -> String {
+    /// The optional `onServerLog` callback receives each stderr line from the server process in real time.
+    func callTool(
+        name: String,
+        arguments: [String: Any] = [:],
+        timeoutSeconds: UInt64 = 30,
+        onServerLog: (@Sendable (String) -> Void)? = nil
+    ) async throws -> String {
         try await ensureStarted()
+
+        // Install progress handler for the duration of this call
+        stderrLineHandler = onServerLog
+
+        let argsDesc = arguments.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
+        mcpLog.info("→ Calling tool '\(name)' (\(argsDesc)) timeout=\(timeoutSeconds)s")
+        let startTime = CFAbsoluteTimeGetCurrent()
+
+        defer { stderrLineHandler = nil }
 
         let response: JSONRPCResponse = try await sendRequest(
             method: "tools/call",
             params: [
                 "name": name,
                 "arguments": arguments,
-            ]
+            ],
+            timeoutSeconds: timeoutSeconds
         )
 
+        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+        mcpLog.info("← Tool '\(name)' responded in \(String(format: "%.1f", elapsed))s")
+
         if let error = response.error {
+            mcpLog.error("← Tool '\(name)' error: \(error.message)")
             throw MCPError.toolError(name: name, message: error.message)
         }
 
         guard let result = response.result else {
+            mcpLog.error("← Tool '\(name)' returned empty result")
             throw MCPError.emptyResponse
         }
 
-        return extractTextContent(from: result)
+        let text = extractTextContent(from: result)
+        mcpLog.info("← Tool '\(name)' returned \(text.count) chars")
+        return text
     }
 
     /// Lists available tools on the MCP server.
@@ -179,7 +245,7 @@ actor MCPClient {
         }
     }
 
-    // MARK: - JSON-RPC Transport
+    // MARK: - JSON-RPC Transport (NDJSON)
 
     private func ensureStarted() async throws {
         if !isInitialized {
@@ -228,16 +294,20 @@ actor MCPClient {
         try sendMessage(message)
     }
 
+    /// Sends a JSON-RPC message as NDJSON (JSON followed by newline).
     private func sendMessage(_ message: [String: Any]) throws {
         guard let stdin = stdinPipe else {
             throw MCPError.notConnected
         }
 
-        var jsonData = try JSONSerialization.data(withJSONObject: message)
-        jsonData.append(0x0A) // newline delimiter
+        let jsonData = try JSONSerialization.data(withJSONObject: message)
+
+        let method = message["method"] as? String ?? "?"
+        let id = message["id"] as? Int
+        mcpLog.debug("Sending \(method) (id=\(id ?? -1), \(jsonData.count) bytes)")
 
         let handle = stdin.fileHandleForWriting
-        handle.write(jsonData)
+        handle.write(jsonData + Data("\n".utf8))
     }
 
     /// Reads the next JSON-RPC response, skipping notifications.
@@ -249,21 +319,29 @@ actor MCPClient {
         let handle = stdout.fileHandleForReading
 
         while true {
+            try Task.checkCancellation()
             let line = try await readLine(from: handle)
 
-            guard let lineData = line.data(using: .utf8),
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            guard let lineData = trimmed.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any]
             else {
-                continue // Skip malformed lines
+                mcpLog.warning("Skipping non-JSON line: \(trimmed.prefix(100))")
+                continue
             }
 
             // Skip notifications (messages without an "id")
             guard let responseID = json["id"] as? Int else {
+                let method = json["method"] as? String ?? "?"
+                mcpLog.debug("Skipping notification: \(method)")
                 continue
             }
 
             guard responseID == expectedID else {
-                continue // Skip mismatched IDs
+                mcpLog.debug("Skipping response id=\(responseID) (waiting for \(expectedID))")
+                continue
             }
 
             var error: JSONRPCError?
@@ -279,34 +357,73 @@ actor MCPClient {
         }
     }
 
-    /// Reads one newline-delimited line from the handle.
-    /// Runs the blocking read on a non-cooperative thread.
+    /// Reads one newline-delimited line from the handle (NDJSON transport).
     private func readLine(from handle: FileHandle) async throws -> String {
-        while true {
-            // Check buffer for a complete line
-            if let newlineIndex = readBuffer.firstIndex(of: 0x0A) {
-                let lineData = readBuffer[readBuffer.startIndex..<newlineIndex]
-                readBuffer.removeSubrange(readBuffer.startIndex...newlineIndex)
-                let line = String(data: Data(lineData), encoding: .utf8) ?? ""
-                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty {
-                    return trimmed
-                }
-                continue // Skip empty lines
-            }
+        let newline = UInt8(ascii: "\n")
 
-            // Read more data off the cooperative thread pool
-            let chunk: Data = try await withCheckedThrowingContinuation { continuation in
-                DispatchQueue.global(qos: .userInitiated).async {
-                    let data = handle.availableData
+        // Check if we already have a complete line in the buffer
+        while !readBuffer.contains(newline) {
+            try Task.checkCancellation()
+            let chunk = try await readChunk(from: handle)
+            readBuffer.append(chunk)
+        }
+
+        // Extract the first complete line
+        guard let newlineIndex = readBuffer.firstIndex(of: newline) else {
+            throw MCPError.protocolError("Missing newline")
+        }
+
+        let lineData = readBuffer[readBuffer.startIndex..<newlineIndex]
+        readBuffer.removeSubrange(readBuffer.startIndex...newlineIndex)
+
+        guard let line = String(data: Data(lineData), encoding: .utf8) else {
+            throw MCPError.protocolError("Invalid line encoding")
+        }
+
+        return line
+    }
+
+    /// Reads available data from the handle using readabilityHandler (non-blocking, cancellation-cooperative).
+    private func readChunk(from handle: FileHandle) async throws -> Data {
+        try Task.checkCancellation()
+
+        // Thread-safe box ensures the continuation is resumed exactly once,
+        // whether from the readabilityHandler callback or from task cancellation.
+        final class ContinuationBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var continuation: CheckedContinuation<Data, Error>?
+            func store(_ c: CheckedContinuation<Data, Error>) {
+                lock.lock()
+                continuation = c
+                lock.unlock()
+            }
+            func resume(with result: Result<Data, Error>) {
+                lock.lock()
+                let c = continuation
+                continuation = nil
+                lock.unlock()
+                c?.resume(with: result)
+            }
+        }
+
+        let box = ContinuationBox()
+
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { cont in
+                box.store(cont)
+                handle.readabilityHandler = { fh in
+                    fh.readabilityHandler = nil
+                    let data = fh.availableData
                     if data.isEmpty {
-                        continuation.resume(throwing: MCPError.serverClosed)
+                        box.resume(with: .failure(MCPError.serverClosed))
                     } else {
-                        continuation.resume(returning: data)
+                        box.resume(with: .success(data))
                     }
                 }
             }
-            readBuffer.append(chunk)
+        } onCancel: {
+            handle.readabilityHandler = nil
+            box.resume(with: .failure(CancellationError()))
         }
     }
 

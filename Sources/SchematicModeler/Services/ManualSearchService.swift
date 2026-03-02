@@ -76,6 +76,76 @@ actor ManualSearchService {
         )
     }
 
+    // MARK: - MCP Tools: Manual Browsing
+
+    /// Returns list of available manual names from the MCP server
+    func listMCPManuals() async throws -> [String] {
+        let output = try await mcpClient.callTool(name: "list_manuals")
+        return output.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Returns board assembly index (IDs and structure) for a manual
+    func readIndex(manualName: String) async throws -> String {
+        try await mcpClient.callTool(
+            name: "read_index",
+            arguments: ["manual_name": manualName]
+        )
+    }
+
+    /// Returns section content from a manual
+    func readSection(manualName: String, section: String) async throws -> String {
+        try await mcpClient.callTool(
+            name: "read_section",
+            arguments: ["manual_name": manualName, "section": section]
+        )
+    }
+
+    /// Returns schematic image paths for an assembly
+    func getSchematic(manualName: String, boardID: String) async throws -> String {
+        try await mcpClient.callTool(
+            name: "get_schematic",
+            arguments: ["manual_name": manualName, "board_id": boardID]
+        )
+    }
+
+    // MARK: - MCP Tools: Analysis Pipeline
+
+    /// Analyzes schematic images for an assembly (intermediate step)
+    func analyzeSchematic(manualName: String, boardID: String) async throws -> String {
+        try await mcpClient.callTool(
+            name: "analyze_schematic",
+            arguments: ["manual_name": manualName, "board_id": boardID],
+            timeoutSeconds: 300
+        )
+    }
+
+    /// Cross-checks schematic analysis against parts lists
+    func crossCheckSchematic(manualName: String, boardID: String) async throws -> String {
+        try await mcpClient.callTool(
+            name: "cross_check_schematic",
+            arguments: ["manual_name": manualName, "board_id": boardID],
+            timeoutSeconds: 300
+        )
+    }
+
+    /// Runs the full analysis pipeline: analyze schematics → generate netlist → write _circuits/<board_id>.json.
+    /// Long-running (2-5 min) — the MCP server handles all Claude API interaction internally.
+    /// The `onProgress` callback receives stderr lines from the server process in real time.
+    func generateNetlist(
+        manualName: String,
+        boardID: String,
+        onProgress: (@Sendable (String) -> Void)? = nil
+    ) async throws -> String {
+        try await mcpClient.callTool(
+            name: "generate_netlist",
+            arguments: ["manual_name": manualName, "board_id": boardID],
+            timeoutSeconds: 300,
+            onServerLog: onProgress
+        )
+    }
+
     // MARK: - Shutdown
 
     func shutdown() async {

@@ -1,5 +1,12 @@
 import Foundation
 
+// MARK: - Layout Mode
+
+enum LayoutMode: String, CaseIterable, Sendable {
+    case schematic
+    case pictorial
+}
+
 // MARK: - Component Types
 
 enum ComponentType: String, Codable, CaseIterable, Sendable {
@@ -127,6 +134,7 @@ struct Component: Codable, Identifiable, Sendable {
     var tolerance: String?
     var pins: [Pin]
     var position: SIMD3<Float>
+    var schematicPosition: SIMD3<Float>?
     var functionalBlock: String?
     var annotations: [String]?
     var failureProbability: Float?
@@ -142,6 +150,7 @@ struct Component: Codable, Identifiable, Sendable {
         tolerance: String? = nil,
         pins: [Pin] = [],
         position: SIMD3<Float> = .zero,
+        schematicPosition: SIMD3<Float>? = nil,
         functionalBlock: String? = nil,
         annotations: [String]? = nil,
         failureProbability: Float? = nil
@@ -157,6 +166,7 @@ struct Component: Codable, Identifiable, Sendable {
         self.tolerance = tolerance
         self.pins = pins
         self.position = position
+        self.schematicPosition = schematicPosition
         self.functionalBlock = functionalBlock
         self.annotations = annotations
         self.failureProbability = failureProbability
@@ -191,11 +201,20 @@ struct Component: Codable, Identifiable, Sendable {
         } else {
             self.position = .zero
         }
+
+        // Schematic position (optional, populated at runtime if not in JSON)
+        if let pos = try? container.decode(SIMD3<Float>.self, forKey: .schematicPosition) {
+            self.schematicPosition = pos
+        } else if let arr = try? container.decode([Float].self, forKey: .schematicPosition), arr.count >= 3 {
+            self.schematicPosition = SIMD3<Float>(arr[0], arr[1], arr[2])
+        } else {
+            self.schematicPosition = nil
+        }
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, designator, type, value, partNumber, description, manufacturer, package, tolerance
-        case pins, position, functionalBlock, annotations, failureProbability
+        case pins, position, schematicPosition, functionalBlock, annotations, failureProbability
     }
 }
 
@@ -261,8 +280,40 @@ struct Circuit: Codable, Identifiable, Sendable {
         self.name = (try? container.decode(String.self, forKey: .name)) ?? "Untitled Circuit"
         self.description = try? container.decode(String.self, forKey: .description)
         self.components = (try? container.decode([Component].self, forKey: .components)) ?? []
-        self.nets = (try? container.decode([Net].self, forKey: .nets)) ?? []
+        var decodedNets = (try? container.decode([Net].self, forKey: .nets)) ?? []
         self.functionalBlocks = (try? container.decode([FunctionalBlock].self, forKey: .functionalBlocks)) ?? []
+
+        // Reconstruct nets from pin netIDs if nets are empty or have no connectedPins.
+        // This handles JSON that only specifies netID on each pin without explicit Net objects.
+        let hasConnections = decodedNets.contains { !$0.connectedPins.isEmpty }
+        if !hasConnections {
+            decodedNets = Self.reconstructNets(from: self.components, existing: decodedNets)
+        }
+        self.nets = decodedNets
+    }
+
+    /// Builds nets from component pin netIDs, merging with any existing net metadata (labels)
+    private static func reconstructNets(from components: [Component], existing: [Net]) -> [Net] {
+        // Collect all pin-to-net assignments
+        var netPins: [String: [Net.PinReference]] = [:]
+        for component in components {
+            for pin in component.pins {
+                guard let netID = pin.netID, !netID.isEmpty else { continue }
+                netPins[netID, default: []].append(
+                    Net.PinReference(componentID: component.designator, pinID: pin.id)
+                )
+            }
+        }
+
+        // Build Net objects, preserving labels from existing decoded nets
+        let existingByID = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+        return netPins.map { netID, pins in
+            Net(
+                id: netID,
+                label: existingByID[netID]?.label,
+                connectedPins: pins
+            )
+        }.sorted { $0.id < $1.id }
     }
 
     private enum CodingKeys: String, CodingKey {

@@ -80,11 +80,48 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
+# Install to /Applications
+echo "Installing to /Applications..."
+rm -rf "/Applications/$APP_BUNDLE"
+cp -R "$APP_BUNDLE" /Applications/
+
+# Add to Dock (or replace existing entry)
+APP_PATH="/Applications/$APP_BUNDLE"
+echo "Updating Dock..."
+
+# Remove existing entry if present
+DOCK_PLIST="$HOME/Library/Preferences/com.apple.dock.plist"
+CURRENT=$(/usr/libexec/PlistBuddy -c "Print persistent-apps" "$DOCK_PLIST" 2>/dev/null | grep -c "file-label" || true)
+for (( i=CURRENT-1; i>=0; i-- )); do
+    LABEL=$(/usr/libexec/PlistBuddy -c "Print persistent-apps:$i:tile-data:file-label" "$DOCK_PLIST" 2>/dev/null || true)
+    if [ "$LABEL" = "3D Schematic Modeler" ] || [ "$LABEL" = "$APP_NAME" ]; then
+        /usr/libexec/PlistBuddy -c "Delete persistent-apps:$i" "$DOCK_PLIST"
+        echo "  Removed old Dock entry"
+    fi
+done
+
+# Add new entry
+defaults write com.apple.dock persistent-apps -array-add \
+    "<dict>
+        <key>tile-data</key>
+        <dict>
+            <key>file-data</key>
+            <dict>
+                <key>_CFURLString</key>
+                <string>file://$APP_PATH/</string>
+                <key>_CFURLStringType</key>
+                <integer>15</integer>
+            </dict>
+            <key>file-label</key>
+            <string>3D Schematic Modeler</string>
+            <key>file-type</key>
+            <integer>41</integer>
+        </dict>
+        <key>tile-type</key>
+        <string>file-tile</string>
+    </dict>"
+
+killall Dock
+
 echo ""
-echo "Done! Created $APP_BUNDLE"
-echo ""
-echo "To install:"
-echo "  cp -R $APP_BUNDLE /Applications/"
-echo ""
-echo "To run:"
-echo "  open $APP_BUNDLE"
+echo "Done! Installed to /Applications/$APP_BUNDLE and added to Dock."

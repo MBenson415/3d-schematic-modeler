@@ -191,8 +191,10 @@ struct ContentView: View {
                 viewModel.loadCircuit(circuit)
             }
         }
-        .sheet(isPresented: $showManualBrowser) {
-            ManualBrowserView { circuit in
+        .sheet(isPresented: $showManualBrowser, onDismiss: {
+            Task { await manualBrowserVM.loadManuals() }
+        }) {
+            ManualBrowserView(viewModel: manualBrowserVM) { circuit in
                 viewModel.loadCircuit(circuit)
                 showManualBrowser = false
             }

@@ -53,6 +53,27 @@ struct ComponentDetailView: View {
                     }
                 }
 
+                if let manufacturer = component.manufacturer {
+                    LabeledContent("Manufacturer") {
+                        Text(manufacturer)
+                            .font(.system(.body, design: .monospaced))
+                    }
+                }
+
+                if let package = component.package {
+                    LabeledContent("Package") {
+                        Text(package)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                }
+
+                if let tolerance = component.tolerance {
+                    LabeledContent("Tolerance") {
+                        Text(tolerance)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                }
+
                 if let desc = component.description {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Description")

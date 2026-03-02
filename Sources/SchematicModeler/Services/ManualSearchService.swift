@@ -18,6 +18,12 @@ actor ManualSearchService {
         let url: String
     }
 
+    // MARK: - Health Check
+
+    func pingServer() async -> Bool {
+        await mcpClient.ping()
+    }
+
     // MARK: - Search
 
     func searchManual(brand: String, model: String) async throws -> [SearchResult] {

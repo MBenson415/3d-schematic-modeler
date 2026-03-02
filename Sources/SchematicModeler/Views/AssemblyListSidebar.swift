@@ -12,6 +12,10 @@ struct AssemblyListSidebar: View {
     @State private var viewerImages: [SchematicImage] = []
     @State private var viewerAssemblyName = ""
 
+    // Rename state
+    @State private var renamingManualID: String?
+    @State private var renameText = ""
+
     var body: some View {
         VStack(spacing: 0) {
             List(selection: Binding(
@@ -23,17 +27,54 @@ struct AssemblyListSidebar: View {
                 }
             )) {
                 ForEach(viewModel.manuals) { manual in
-                    Section {
+                    DisclosureGroup {
                         ForEach(manual.boardAssemblies) { assembly in
                             assemblyRow(assembly, manual: manual)
                                 .tag(assembly)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    if viewModel.isCached(manual: manual, assembly: assembly) {
+                                        Button(role: .destructive) {
+                                            viewModel.deleteCachedCircuit(manual: manual, assembly: assembly)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                }
                         }
-                    } header: {
-                        Text(manual.name)
-                            .font(.caption.bold())
-                            .foregroundStyle(.primary)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            if renamingManualID == manual.id {
+                                TextField("Manual name", text: $renameText, onCommit: {
+                                    viewModel.renameManual(manual, to: renameText)
+                                    renamingManualID = nil
+                                })
+                                .font(.caption.bold())
+                                .textFieldStyle(.roundedBorder)
+                            } else {
+                                Text(manual.name)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.primary)
+                            }
+                            Text("\(manual.boardAssemblies.count) assemblies")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .contextMenu {
+                            Button {
+                                renameText = manual.name
+                                renamingManualID = manual.id
+                            } label: {
+                                Label("Rename", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                viewModel.deleteManual(manual)
+                            } label: {
+                                Label("Delete Manual", systemImage: "trash")
+                            }
+                        }
                     }
                 }
+                .onMove { viewModel.moveManuals(from: $0, to: $1) }
             }
             .listStyle(.sidebar)
 

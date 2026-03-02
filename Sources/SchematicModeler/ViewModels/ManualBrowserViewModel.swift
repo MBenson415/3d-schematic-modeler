@@ -12,6 +12,10 @@ final class ManualBrowserViewModel {
     var selectedImage: SchematicImage?
     var loadedImageData: Data?
 
+    // MCP server status
+    enum MCPStatus { case unknown, checking, connected, unreachable }
+    var mcpStatus: MCPStatus = .unknown
+
     // Search
     var searchBrand = ""
     var searchModel = ""
@@ -99,6 +103,14 @@ final class ManualBrowserViewModel {
         }
     }
 
+    // MARK: - MCP Status
+
+    func checkMCPServer() async {
+        mcpStatus = .checking
+        let ok = await searchService.pingServer()
+        mcpStatus = ok ? .connected : .unreachable
+    }
+
     // MARK: - Search
 
     func searchForManual() async {
@@ -151,8 +163,18 @@ final class ManualBrowserViewModel {
             await loadManuals()
 
             if let newManual = manuals.first(where: { !previousIDs.contains($0.id) }) {
-                selectManual(newManual)
-                extractionStatus = "Loaded: \(newManual.name) (\(newManual.boardAssemblies.count) assemblies)"
+                // Auto-name from search brand/model if available
+                let autoName = [searchBrand, searchModel]
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+                if !autoName.isEmpty {
+                    renameManual(newManual, to: "\(autoName) Service Manual")
+                }
+
+                selectManual(manuals.first(where: { $0.id == newManual.id }) ?? newManual)
+                let displayName = manuals.first(where: { $0.id == newManual.id })?.name ?? newManual.name
+                extractionStatus = "Loaded: \(displayName) (\(newManual.boardAssemblies.count) assemblies)"
             } else {
                 // No new manual directory found — show convert.py output for debugging
                 extractionStatus = "Extraction finished but no new manual found. Output: \(result.prefix(300))"
@@ -310,6 +332,48 @@ final class ManualBrowserViewModel {
 
         manuals.removeAll { $0.id == manual.id }
         cachedAssemblies = cachedAssemblies.filter { !$0.hasPrefix("\(manual.id)/") }
+    }
+
+    // MARK: - Reorder
+
+    func moveManuals(from source: IndexSet, to destination: Int) {
+        manuals.move(fromOffsets: source, toOffset: destination)
+    }
+
+    // MARK: - Rename
+
+    func renameManual(_ manual: ServiceManual, to newName: String) {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let indexURL = manual.directoryURL.appendingPathComponent("_index.md")
+        guard var content = try? String(contentsOf: indexURL, encoding: .utf8) else { return }
+
+        // Replace the first `# Title` line
+        let lines = content.components(separatedBy: "\n")
+        if let titleIndex = lines.firstIndex(where: { $0.hasPrefix("# ") && !$0.hasPrefix("## ") }) {
+            var mutableLines = lines
+            mutableLines[titleIndex] = "# \(trimmed)"
+            content = mutableLines.joined(separator: "\n")
+        } else {
+            // No title line — prepend one
+            content = "# \(trimmed)\n\n" + content
+        }
+
+        try? content.write(to: indexURL, atomically: true, encoding: .utf8)
+
+        // Update in-memory list
+        if let idx = manuals.firstIndex(where: { $0.id == manual.id }) {
+            let old = manuals[idx]
+            manuals[idx] = ServiceManual(
+                id: old.id,
+                name: trimmed,
+                directoryURL: old.directoryURL,
+                totalPages: old.totalPages,
+                boardAssemblies: old.boardAssemblies,
+                sections: old.sections
+            )
+        }
     }
 
     // MARK: - Finder

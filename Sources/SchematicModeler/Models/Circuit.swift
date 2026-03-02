@@ -122,6 +122,9 @@ struct Component: Codable, Identifiable, Sendable {
     var value: String
     var partNumber: String?
     var description: String?
+    var manufacturer: String?
+    var package: String?
+    var tolerance: String?
     var pins: [Pin]
     var position: SIMD3<Float>
     var functionalBlock: String?
@@ -134,6 +137,9 @@ struct Component: Codable, Identifiable, Sendable {
         value: String,
         partNumber: String? = nil,
         description: String? = nil,
+        manufacturer: String? = nil,
+        package: String? = nil,
+        tolerance: String? = nil,
         pins: [Pin] = [],
         position: SIMD3<Float> = .zero,
         functionalBlock: String? = nil,
@@ -146,6 +152,9 @@ struct Component: Codable, Identifiable, Sendable {
         self.value = value
         self.partNumber = partNumber
         self.description = description
+        self.manufacturer = manufacturer
+        self.package = package
+        self.tolerance = tolerance
         self.pins = pins
         self.position = position
         self.functionalBlock = functionalBlock
@@ -166,6 +175,9 @@ struct Component: Codable, Identifiable, Sendable {
         self.value = (try? container.decode(String.self, forKey: .value)) ?? ""
         self.partNumber = try? container.decode(String.self, forKey: .partNumber)
         self.description = try? container.decode(String.self, forKey: .description)
+        self.manufacturer = try? container.decode(String.self, forKey: .manufacturer)
+        self.package = try? container.decode(String.self, forKey: .package)
+        self.tolerance = try? container.decode(String.self, forKey: .tolerance)
         self.pins = (try? container.decode([Pin].self, forKey: .pins)) ?? []
         self.functionalBlock = try? container.decode(String.self, forKey: .functionalBlock)
         self.annotations = try? container.decode([String].self, forKey: .annotations)
@@ -182,8 +194,8 @@ struct Component: Codable, Identifiable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, designator, type, value, partNumber, description, pins, position, functionalBlock
-        case annotations, failureProbability
+        case id, designator, type, value, partNumber, description, manufacturer, package, tolerance
+        case pins, position, functionalBlock, annotations, failureProbability
     }
 }
 

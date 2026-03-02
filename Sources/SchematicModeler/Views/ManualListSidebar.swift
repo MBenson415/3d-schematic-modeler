@@ -10,8 +10,14 @@ struct ManualListSidebar: View {
             // Search form
             GroupBox {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Search Service Manual")
-                        .font(.headline)
+                    HStack {
+                        Text("Search Service Manual")
+                            .font(.headline)
+                        Spacer()
+                        MCPStatusBadge(status: viewModel.mcpStatus) {
+                            Task { await viewModel.checkMCPServer() }
+                        }
+                    }
 
                     TextField("Brand (e.g. Pioneer)", text: $viewModel.searchBrand)
                         .textFieldStyle(.roundedBorder)
@@ -203,6 +209,58 @@ struct ManualListSidebar: View {
                     .padding(.horizontal, 8)
                     .padding(.bottom, 4)
             }
+        }
+        .task {
+            await viewModel.checkMCPServer()
+        }
+    }
+}
+
+// MARK: - MCP Status Badge
+
+private struct MCPStatusBadge: View {
+    let status: ManualBrowserViewModel.MCPStatus
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .help(tooltip)
+    }
+
+    private var color: Color {
+        switch status {
+        case .unknown: .gray
+        case .checking: .yellow
+        case .connected: .green
+        case .unreachable: .red
+        }
+    }
+
+    private var label: String {
+        switch status {
+        case .unknown: "MCP"
+        case .checking: "Checking..."
+        case .connected: "MCP Connected"
+        case .unreachable: "MCP Offline"
+        }
+    }
+
+    private var tooltip: String {
+        switch status {
+        case .unknown: "MCP server status unknown — click to check"
+        case .checking: "Checking MCP server..."
+        case .connected: "MCP server is responding — click to re-check"
+        case .unreachable: "MCP server is not responding — click to retry"
         }
     }
 }

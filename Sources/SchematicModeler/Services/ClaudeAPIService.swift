@@ -217,8 +217,9 @@ actor ClaudeAPIService {
             "type": "text",
             "text": """
             Above are the parts lists for \(assemblyName). Below is the circuit netlist \
-            extracted from the schematics. Update the component values, part numbers, and \
-            descriptions using the parts list data. Fix any incorrect component types. \
+            extracted from the schematics. Update the component values, part numbers, \
+            descriptions, manufacturers, packages, and tolerances using the parts list data. \
+            Fix any incorrect component types. \
             Do NOT remove any components or nets — only update values.
 
             CRITICAL: Return ONLY the updated JSON — no commentary, no markdown fences, \
@@ -236,7 +237,8 @@ actor ClaudeAPIService {
             "system": """
             You are an expert circuit analyst. You are given parts list images and an existing \
             circuit netlist JSON. Update the netlist with accurate component values, part numbers, \
-            and descriptions from the parts lists. Preserve all existing components and net connections. \
+            descriptions, manufacturers, packages, and tolerances from the parts lists. \
+            Preserve all existing components and net connections. \
             Return ONLY valid JSON in the same schema — no commentary before or after the JSON. \
             Keep net IDs short (e.g. "VCC", "GND", "n1" not long descriptions). \
             Omit the "label" field on nets unless it differs from the id.
@@ -268,8 +270,11 @@ actor ClaudeAPIService {
               "designator": "R1",
               "type": "resistor",
               "value": "10kΩ",
-              "partNumber": "optional",
+              "partNumber": "optional manufacturer part number",
               "description": "brief function",
+              "manufacturer": "optional manufacturer name",
+              "package": "optional package/footprint",
+              "tolerance": "optional tolerance (e.g. ±5%)",
               "pins": [
                 { "id": "1", "label": "1", "netID": "n1" },
                 { "id": "2", "label": "2", "netID": "n2" }

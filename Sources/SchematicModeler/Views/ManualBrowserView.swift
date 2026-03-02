@@ -3,7 +3,7 @@ import SwiftUI
 /// Main manual browser window — 3-column NavigationSplitView
 struct ManualBrowserView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = ManualBrowserViewModel()
+    @Bindable var viewModel: ManualBrowserViewModel
     var onCircuitLoaded: (Circuit) -> Void
 
     var body: some View {
